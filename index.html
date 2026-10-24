@@ -446,13 +446,18 @@ $("form").addEventListener("submit", async e => {
     pixKatya: (pg.find(p => p[0] === "port") || [0,0])[1], pixIreni: (pg.find(p => p[0] === "mat") || [0,0])[1] };
   const btn = $("enviar"); btn.disabled = true; btn.textContent = "Enviando...";
   const temPlanilha = /^https:\/\/script\.google\.com\/.+\/exec$/.test(CONFIG.planilha);
+  let gravou = !temPlanilha;
   if (temPlanilha) try {
-    await fetch(CONFIG.planilha, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(dados) });
-  } catch (err) {
-    btn.disabled = false; btn.textContent = "Confirmar inscrição";
-    $("err").textContent = "Não foi possível registrar agora. Verifique a internet e tente de novo, ou envie a mensagem abaixo pelo WhatsApp.";
+    const r = await fetch(CONFIG.planilha, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(dados) });
+    const j = await r.json();
+    gravou = !!j.ok;
+  } catch (err) { gravou = false; }
+  if (!gravou) {
+    btn.disabled = false; btn.textContent = "Tentar de novo";
+    $("err").textContent = "Não conseguimos registrar sua inscrição agora. Tente de novo em instantes ou envie a mensagem abaixo pelo WhatsApp.";
+  } else {
+    btn.textContent = "Inscrição registrada ✓";
   }
-  btn.textContent = "Inscrição enviada";
   $("msg").textContent = msg;
   $("zap").href = "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(msg);
   $("done").hidden = false;
